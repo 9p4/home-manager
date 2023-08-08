@@ -33,7 +33,7 @@ let
         example = literalExpression "pkgs.gnome.gnome-themes-extra";
         description = ''
           Package providing the theme. This package will be installed
-          to your profile. If <literal>null</literal> then the theme
+          to your profile. If `null` then the theme
           is assumed to already be available in your profile.
         '';
       };
@@ -54,7 +54,7 @@ let
         example = literalExpression "pkgs.gnome.adwaita-icon-theme";
         description = ''
           Package providing the icon theme. This package will be installed
-          to your profile. If <literal>null</literal> then the theme
+          to your profile. If `null` then the theme
           is assumed to already be available in your profile.
         '';
       };
@@ -75,7 +75,7 @@ let
         example = literalExpression "pkgs.vanilla-dmz";
         description = ''
           Package providing the cursor theme. This package will be installed
-          to your profile. If <literal>null</literal> then the theme
+          to your profile. If `null` then the theme
           is assumed to already be available in your profile.
         '';
       };
@@ -143,7 +143,7 @@ in {
           example = "gtk-can-change-accels = 1";
           description = ''
             Extra configuration lines to add verbatim to
-            <filename>~/.gtkrc-2.0</filename>.
+            {file}`~/.gtkrc-2.0`.
           '';
         };
 
@@ -177,7 +177,7 @@ in {
           };
           description = ''
             Extra configuration options to add to
-            <filename>$XDG_CONFIG_HOME/gtk-3.0/settings.ini</filename>.
+            {file}`$XDG_CONFIG_HOME/gtk-3.0/settings.ini`.
           '';
         };
 
@@ -186,12 +186,20 @@ in {
           default = "";
           description = ''
             Extra configuration lines to add verbatim to
-            <filename>$XDG_CONFIG_HOME/gtk-3.0/gtk.css</filename>.
+            {file}`$XDG_CONFIG_HOME/gtk-3.0/gtk.css`.
           '';
         };
       };
 
       gtk4 = {
+        colorScheme = mkOption {
+          type = types.str;
+          default = "default";
+          example = "prefers-dark";
+          description = ''
+            GTK 4 color scheme
+          '';
+        };
         extraConfig = mkOption {
           type = with types; attrsOf (either bool (either int str));
           default = { };
@@ -201,7 +209,16 @@ in {
           };
           description = ''
             Extra configuration options to add to
-            <filename>$XDG_CONFIG_HOME/gtk-4.0/settings.ini</filename>.
+            {file}`$XDG_CONFIG_HOME/gtk-4.0/settings.ini`.
+          '';
+        };
+
+        extraCss = mkOption {
+          type = types.lines;
+          default = "";
+          description = ''
+            Extra configuration lines to add verbatim to
+            {file}`$XDG_CONFIG_HOME/gtk-4.0/gtk.css`.
           '';
         };
       };
@@ -237,6 +254,8 @@ in {
       } // optionalAttrs
       (cfg.cursorTheme != null && cfg.cursorTheme.size != null) {
         cursor-size = cfg.cursorTheme.size;
+      } // optionalAttrs (cfg.gtk4.colorScheme != null) {
+        color-scheme = cfg.gtk4.colorScheme;
       };
 
     optionalPackage = opt:
@@ -267,6 +286,9 @@ in {
 
     xdg.configFile."gtk-4.0/settings.ini".text =
       toGtk3Ini { Settings = gtkIni // cfg4.extraConfig; };
+
+    xdg.configFile."gtk-4.0/gtk.css" =
+      mkIf (cfg4.extraCss != "") { text = cfg4.extraCss; };
 
     dconf.settings."org/gnome/desktop/interface" = dconfIni;
   });
